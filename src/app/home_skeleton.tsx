@@ -63,8 +63,8 @@ const HomeSkeleton: React.FC<HomeSkeletonProps> = ({ searchedCity, weather, sele
       <div className="max-w-[420px] w-full h-screen bg-slate-100 p-24 overflow-y-auto">
         {weather ? (
           moment(weather?.forecast.forecastday[selectedDay].date).isSame(moment(), 'day') 
-            ? <p className="text-sm text-end font-semibold">{`Today's prediction`}</p>
-            : <p className="text-sm text-end font-semibold">{moment(weather?.forecast.forecastday[selectedDay].date).format('dddd')}</p>
+            ? <p className="text-sm text-end font-semibold">{`Today's Forecast`}</p>
+            : <p className="text-sm text-end font-semibold">{moment(weather?.forecast.forecastday[selectedDay].date).format('dddd')} forecast</p>
           ) : (
             <Skeleton className="h-4 w-[60px] mb-3"/>
           )

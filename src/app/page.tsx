@@ -44,7 +44,6 @@ const Home = ()  =>{
   }, [searchedCity]);
 
   useEffect(() => {
-    setIsLoading(true);
     setInterval(() => { setIsLoading(false) }, 2500);
   }, [selectedDay]);
 
@@ -78,7 +77,7 @@ const Home = ()  =>{
               
               <div>
                 <p className="text-lg text-gray-700 mb-2">{time && time.format('HH:mm')}</p>
-                <p className="text-5xl font-bold mb-4">{time && time.format('dddd')}</p>
+                <p className="text-5xl font-bold mb-4">{moment(weather?.forecast.forecastday[selectedDay].date).format('dddd')}</p>
                 <p className="text-lg text-gray-700">
                   {selectedDay === 0 ? (
                     weather?.current.condition.text
@@ -115,8 +114,9 @@ const Home = ()  =>{
       <div className="max-w-[420px] w-full h-screen bg-slate-100 p-24 overflow-y-auto">
         <p className="text-sm text-end font-semibold">
           {moment(weather?.forecast.forecastday[selectedDay].date).isSame(moment(), 'day') 
-            ? "Today's prediction" 
-            : moment(weather?.forecast.forecastday[selectedDay].date).format('dddd')}
+            ? "Today's" 
+            : moment(weather?.forecast.forecastday[selectedDay].date).format('dddd')
+          } forecast
         </p>
 
         <div className="mt-16 mb-16">
