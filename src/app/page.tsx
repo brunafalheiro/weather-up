@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { getCity, getForecast } from "@/services/api";
 import { Weather } from "@/interfaces/weather/weather";
+import Clock from "./clock";
 import { Moment } from "moment-timezone";
 import HomeSkeleton from "./home_skeleton";
 import moment from "moment-timezone";
@@ -16,6 +17,7 @@ const Home = ()  =>{
   const [timezone, setTimezone] = useState<string>("");
   const [selectedDay, setSelectedDay] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const selectedForecast = weather?.forecast.forecastday[selectedDay];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -28,28 +30,41 @@ const Home = ()  =>{
 
   useEffect(() => {
     if (searchedCity.length < 3) return;
-
+  
     setIsLoading(true);
   
     const fetchWeather = async () => {
-      const data = await getCity(searchedCity);
-      const currentCity = data[0].name;
-      const forecast = await getForecast({ city: currentCity });
-      setWeather(forecast);
-      setTimezone(forecast.location.tz_id);
-      setSelectedDay(0);
+      try {
+        const data = await getCity(searchedCity);
+        if (!data || data.length === 0) throw new Error("City not found");
+  
+        const currentCity = data[0].name;
+        const forecast = await getForecast({ city: currentCity });
+  
+        setWeather(forecast);
+        setTimezone(forecast.location.tz_id);
+        setSelectedDay(0);
+      } catch (error) {
+        console.error("Error fetching weather", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
   
     fetchWeather();
   }, [searchedCity]);
 
   useEffect(() => {
-    setInterval(() => { setIsLoading(false) }, 2500);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+  
+    return () => clearTimeout(timer);
   }, [selectedDay]);
-
+  
   if (isLoading) return <HomeSkeleton searchedCity={searchedCity} weather={weather} selectedDay={selectedDay}/>;
   return (
-    <div className="h-screen flex">
+    <div className="flex">
       <div className="w-full h-screen flex flex-col justify-between bg-slate-200 p-24">
         <div className="h-full flex flex-col justify-between">
           <div className="flex justify-between mb-24">
@@ -58,7 +73,7 @@ const Home = ()  =>{
               onChange={(text) => setSearchedCity(text.target.value)}
               className="w-25"
             />
-            <p className="text-sm font-semibold">{time && time?.format('MM-DD-YYYY')}</p>
+            <Clock timezone={timezone} />
           </div>
 
           {weather?.current.condition.icon && (
@@ -67,7 +82,7 @@ const Home = ()  =>{
                   {selectedDay === 0 ? (
                     <p className="relative z-10 text-9xl font-bold">{weather?.current.heatindex_c}</p>
                   ) : (
-                    <p className="relative z-10 text-9xl font-bold">{weather?.forecast.forecastday[selectedDay].day.avgtemp_c}</p>
+                    <p className="relative z-10 text-9xl font-bold">{selectedForecast?.day.avgtemp_c}</p>
                   )}
                 <div className="relative">
                   <p className="relative z-20 text-9xl font-bold">°</p>
@@ -77,12 +92,12 @@ const Home = ()  =>{
               
               <div>
                 <p className="text-lg text-gray-700 mb-2">{time && time.format('HH:mm')}</p>
-                <p className="text-5xl font-bold mb-4">{moment(weather?.forecast.forecastday[selectedDay].date).format('dddd')}</p>
+                <p className="text-5xl font-bold mb-4">{moment(selectedForecast?.date).format('dddd')}</p>
                 <p className="text-lg text-gray-700">
                   {selectedDay === 0 ? (
                     weather?.current.condition.text
                   ) : (
-                    weather?.forecast.forecastday[selectedDay].day.condition.text
+                    selectedForecast?.day.condition.text
                   )}
                 </p>
               </div>
@@ -93,7 +108,7 @@ const Home = ()  =>{
             {weather?.forecast.forecastday.map((forecast, index) => (
               <div
                 key={index}
-                className={`w-28 h-full flex flex-col items-center ${selectedDay === index ? 'border border-black border-gray-600 rounded-xl' : ''} cursor-pointer p-4 mr-8`}
+                className={`w-full h-full flex flex-col items-center ${selectedDay === index ? 'border border-black border-gray-600 rounded-xl' : ''} cursor-pointer p-4 mr-8`}
                 onClick={() => setSelectedDay(index)}
               > 
                 <Image
@@ -111,35 +126,35 @@ const Home = ()  =>{
         </div>
       </div>
       
-      <div className="max-w-[420px] w-full h-screen bg-slate-100 p-24 overflow-y-auto">
+      <div className="max-w-[420px] min-w-[400px] w-full h-screen bg-slate-100 p-24 overflow-y-auto">
         <p className="text-sm text-end font-semibold">
-          {moment(weather?.forecast.forecastday[selectedDay].date).isSame(moment(), 'day') 
+          {moment(selectedForecast?.date).isSame(moment(), 'day') 
             ? "Today's" 
-            : moment(weather?.forecast.forecastday[selectedDay].date).format('dddd')
+            : moment(selectedForecast?.date).format('dddd')
           } forecast
         </p>
 
         <div className="mt-16 mb-16">
           <div className="flex justify-end mb-2">
             <p className="uppercase text-gray-400 mr-4">Max</p>
-            <p className="w-10 font-semibold text-gray-600">{weather?.forecast.forecastday[selectedDay].day.maxtemp_c}°</p>
+            <p className="w-10 font-semibold text-gray-600">{selectedForecast?.day.maxtemp_c}°</p>
           </div>
           <div className="flex justify-end mb-2">
             <p className="uppercase text-gray-400 mr-4">Low</p>
-            <p className="w-10 font-semibold text-gray-600">{weather?.forecast.forecastday[selectedDay].day.mintemp_c}°</p>
+            <p className="w-10 font-semibold text-gray-600">{selectedForecast?.day.mintemp_c}°</p>
           </div>
           <div className="flex justify-end mb-2">
             <p className="uppercase text-gray-400 mr-4">Chance of rain</p>
-            <p className="w-10 font-semibold text-gray-600">{weather?.forecast.forecastday[selectedDay].day.daily_chance_of_rain}%</p>
+            <p className="w-10 font-semibold text-gray-600">{selectedForecast?.day.daily_chance_of_rain}%</p>
           </div>
           <div className="flex justify-end">
             <p className="uppercase text-gray-400 mr-4">Chance of snow</p>
-            <p className="w-10 font-semibold text-gray-600">{weather?.forecast.forecastday[selectedDay].day.daily_chance_of_snow}%</p>
+            <p className="w-10 font-semibold text-gray-600">{selectedForecast?.day.daily_chance_of_snow}%</p>
           </div>
         </div>
 
         <div className="flex flex-col justify-center">
-          {weather?.forecast.forecastday[selectedDay].hour
+          {selectedForecast?.hour
             .filter(hour => selectedDay === 0 ? new Date(hour.time).getHours() > time?.hour() : true)
             .map((hour, index) => (
               <div key={index} className="flex justify-end mb-8">
