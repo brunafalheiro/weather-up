@@ -52,9 +52,7 @@ const Home = ()  =>{
             onChange={(text) => setSearchedCity(text.target.value)}
             className="w-25"
           />
-          <p className="text-sm font-semibold">
-            {time && time?.format('MM-DD-YYYY')}
-          </p>
+          <p className="text-sm font-semibold">{time && time?.format('MM-DD-YYYY')}</p>
         </div>
 
         {weather?.current.condition.icon && (
@@ -130,7 +128,7 @@ const Home = ()  =>{
 
         <div className="flex flex-col justify-center">
           {weather?.forecast.forecastday[selectedDay].hour
-            .filter(hour => new Date(hour.time).getHours() > time?.hour() )
+            .filter(hour => selectedDay === 0 ? new Date(hour.time).getHours() > time?.hour() : true)
             .map((hour, index) => (
               <div key={index} className="flex justify-end mb-8">
                 <p className="text-xl text-gray-600 mr-12">
